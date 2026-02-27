@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, sans-serif;
+  background: #F3F4F6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Recharts overflow fix */
+.recharts-wrapper { overflow: hidden !important; }
+.recharts-legend-wrapper { overflow: hidden !important; }
