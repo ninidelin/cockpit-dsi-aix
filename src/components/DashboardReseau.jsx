@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from "./ui/Card";
 import { Wifi, Users, Activity, AlertTriangle, Network, ArrowUpRight } from "lucide-react";
 import {
@@ -7,17 +8,28 @@ import {
 import { reseauWifiDec2025 } from "../data/reseau";
 import { TONES, CHART_COLORS } from "./ui/theme";
 
+/* Hook responsive pour la taille des labels Recharts */
+function useChartFs() {
+  const [fs, setFs] = useState(() => window.innerWidth < 640 ? 9 : 11)
+  useEffect(() => {
+    const handler = () => setFs(window.innerWidth < 640 ? 9 : 11)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return fs
+}
+
 function KpiTile({ tone, icon: Icon, label, value, sub }) {
   return (
-    <div className={`rounded-xl shadow-lg bg-gradient-to-br ${TONES[tone]} text-white p-5`}>
+    <div className={`rounded-xl shadow-lg bg-gradient-to-br ${TONES[tone]} text-white p-4 sm:p-5`}>
       <div className="flex items-start justify-between">
         <div>
           <div className="text-xs font-medium opacity-90">{label}</div>
-          <div className="text-3xl font-extrabold tracking-tight mt-1">{value}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1">{value}</div>
           {sub && <div className="text-xs opacity-80 mt-1">{sub}</div>}
         </div>
         {Icon && (
-          <div className="h-10 w-10 rounded-xl bg-white/15 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
             <Icon size={22} />
           </div>
         )}
@@ -42,15 +54,19 @@ function Panel({ title, right, children }) {
 
 export default function DashboardReseau() {
   const { kpi, wifi } = reseauWifiDec2025;
+  const fs = useChartFs();
+  const yAxisW = fs === 9 ? 90 : 130;
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       <div className="text-center mb-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Réseau & Wi‑Fi – Disponibilité & Usages</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
+          Réseau & Wi‑Fi – Disponibilité & Usages
+        </h1>
         <p className="text-slate-500 mt-1 text-sm">Périmètre : décembre 2025 (consolidation progressive)</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
         <KpiTile tone="bleu" icon={Network} label="Disponibilité réseau" value={`${kpi.disponibiliteReseau}%`} />
         <KpiTile tone="indigo" icon={Users} label="Connexions simultanées (pic)" value={kpi.connexionsMax.toLocaleString("fr-FR")} />
         <KpiTile tone="orange" icon={Activity} label="Trafic réseau" value={`${kpi.volumeTraficGo.toLocaleString("fr-FR")} Go`} />
@@ -60,12 +76,12 @@ export default function DashboardReseau() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Panel title="Usagers Wi‑Fi (6 derniers mois)" right={<span className="inline-flex items-center gap-1"><ArrowUpRight size={12} /> tendance</span>}>
-          <div className="h-[260px]">
+          <div className="h-[150px] sm:h-[260px] overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={wifi.utilisateursTrend}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mois" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey="mois" tick={{ fontSize: fs }} />
+                <YAxis tick={{ fontSize: fs }} />
                 <Tooltip />
                 <Line type="monotone" dataKey="value" name="Utilisateurs" stroke={CHART_COLORS.bleu} strokeWidth={3} dot />
               </LineChart>
@@ -75,12 +91,12 @@ export default function DashboardReseau() {
         </Panel>
 
         <Panel title="Trafic Wi‑Fi (Go) – 6 derniers mois">
-          <div className="h-[260px]">
+          <div className="h-[150px] sm:h-[260px] overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={wifi.traficTrendGo}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mois" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey="mois" tick={{ fontSize: fs }} />
+                <YAxis tick={{ fontSize: fs }} />
                 <Tooltip />
                 <Bar dataKey="value" name="Go" fill={CHART_COLORS.or} radius={[6, 6, 0, 0]} />
               </BarChart>
@@ -92,12 +108,12 @@ export default function DashboardReseau() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Panel title="Top sites Wi‑Fi les plus sollicités">
-          <div className="h-[260px]">
+          <div className="h-[150px] sm:h-[260px] overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={wifi.topSites} layout="vertical" margin={{ left: 12 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="site" width={130} tick={{ fontSize: 11 }} />
+                <XAxis type="number" tick={{ fontSize: fs }} />
+                <YAxis type="category" dataKey="site" width={yAxisW} tick={{ fontSize: fs }} />
                 <Tooltip />
                 <Bar dataKey="value" name="Connexions" fill={CHART_COLORS.vert} radius={[0, 6, 6, 0]} />
               </BarChart>
@@ -107,12 +123,12 @@ export default function DashboardReseau() {
         </Panel>
 
         <Panel title="Bornes sous tension (taux de charge)">
-          <div className="h-[260px]">
+          <div className="h-[150px] sm:h-[260px] overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={wifi.bornesSaturees} layout="vertical" margin={{ left: 12 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="borne" width={130} tick={{ fontSize: 11 }} />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: fs }} />
+                <YAxis type="category" dataKey="borne" width={yAxisW} tick={{ fontSize: fs }} />
                 <Tooltip />
                 <Bar dataKey="taux" name="Charge (%)" fill={CHART_COLORS.rouge} radius={[0, 6, 6, 0]} />
               </BarChart>

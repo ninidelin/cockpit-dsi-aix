@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from "./ui/Card";
 import { Shield, Mail, Wifi, Globe, Flame, Siren, AlertTriangle } from "lucide-react";
 import {
@@ -7,17 +8,28 @@ import {
 import { securityDec2025 } from "../data/securite";
 import { TONES, CHART_COLORS } from "./ui/theme";
 
+/* Hook responsive pour la taille des labels Recharts */
+function useChartFs() {
+  const [fs, setFs] = useState(() => window.innerWidth < 640 ? 9 : 11)
+  useEffect(() => {
+    const handler = () => setFs(window.innerWidth < 640 ? 9 : 11)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return fs
+}
+
 function KpiTile({ tone = "bleu", icon: Icon, label, value, sub }) {
   return (
-    <div className={`rounded-xl shadow-lg bg-gradient-to-br ${TONES[tone]} text-white p-5`}>
+    <div className={`rounded-xl shadow-lg bg-gradient-to-br ${TONES[tone]} text-white p-4 sm:p-5`}>
       <div className="flex items-start justify-between">
         <div>
           <div className="text-xs font-medium opacity-90">{label}</div>
-          <div className="text-3xl font-extrabold tracking-tight mt-1">{value}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1">{value}</div>
           {sub && <div className="text-xs opacity-80 mt-1">{sub}</div>}
         </div>
         {Icon && (
-          <div className="h-10 w-10 rounded-xl bg-white/15 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
             <Icon size={22} />
           </div>
         )}
@@ -49,6 +61,8 @@ function Panel({ title, icon: Icon, children, right }) {
 
 export default function DashboardSecurite() {
   const d = securityDec2025;
+  const fs = useChartFs();
+  const yAxisW = fs === 9 ? 80 : 110;
   const sitesApps = d.kpi.sitesBloques + d.kpi.appsBloquees;
   const phishingVsAutres = [
     { name: "Phishing", value: d.kpi.phishingBloques },
@@ -56,15 +70,15 @@ export default function DashboardSecurite() {
   ];
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 sm:p-6 space-y-5">
       <div className="text-center mb-2">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900">
           Sécurité – Menaces & Protection
         </h1>
         <p className="text-slate-500 mt-1 text-sm">Périmètre : Décembre 2025 (données consolidées)</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
         <KpiTile tone="bleu" icon={Mail} label="Messages traités" value={d.kpi.messagesTraites.toLocaleString("fr-FR")} />
         <KpiTile tone="rouge" icon={Shield} label="Menaces bloquées" value={d.kpi.messagesBloques.toLocaleString("fr-FR")} sub={`${Math.round(d.kpi.tauxBlocage * 100)}% des emails`} />
         <KpiTile tone="orange" icon={Siren} label="Phishing bloqué" value={d.kpi.phishingBloques.toLocaleString("fr-FR")} sub="Bitdefender + Proofpoint" />
@@ -82,14 +96,14 @@ export default function DashboardSecurite() {
         </div>
         <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Panel title="Volume de mails traités" right="Déc. 2025" icon={Mail}>
-            <div className="h-[200px]">
+            <div className="h-[150px] sm:h-[200px] overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={d.messagerie.volumeDec}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="label" tick={{ fontSize: fs }} />
+                  <YAxis tick={{ fontSize: fs }} />
                   <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Legend wrapperStyle={{ fontSize: fs }} />
                   <Bar dataKey="total" name="Total" fill={CHART_COLORS.bleu} radius={[6, 6, 0, 0]} />
                   <Bar dataKey="bloques" name="Bloqués" fill={CHART_COLORS.rouge} radius={[6, 6, 0, 0]} />
                 </BarChart>
@@ -99,7 +113,7 @@ export default function DashboardSecurite() {
           </Panel>
 
           <Panel title="Répartition des mails" icon={Shield}>
-            <div className="h-[200px]">
+            <div className="h-[150px] sm:h-[200px] overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={d.messagerie.repartition} dataKey="value" nameKey="name" innerRadius={50} outerRadius={75} paddingAngle={2} label>
@@ -107,7 +121,7 @@ export default function DashboardSecurite() {
                     <Cell fill={CHART_COLORS.bleu} />
                   </Pie>
                   <Tooltip />
-                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+                  <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: fs }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -115,12 +129,12 @@ export default function DashboardSecurite() {
           </Panel>
 
           <Panel title="Types de menaces bloquées" icon={AlertTriangle}>
-            <div className="h-[200px]">
+            <div className="h-[150px] sm:h-[200px] overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={d.messagerie.detailsBlocage} layout="vertical" margin={{ left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
+                  <XAxis type="number" tick={{ fontSize: fs }} />
+                  <YAxis type="category" dataKey="name" width={yAxisW} tick={{ fontSize: fs }} />
                   <Tooltip />
                   <Bar dataKey="value" name="Bloqués" fill={CHART_COLORS.rouge} radius={[0, 6, 6, 0]} />
                 </BarChart>
@@ -141,12 +155,12 @@ export default function DashboardSecurite() {
         </div>
         <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
           <Panel title="Phishing vs autres menaces" icon={Siren} right="Déc. 2025">
-            <div className="h-[200px]">
+            <div className="h-[150px] sm:h-[200px] overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={phishingVsAutres}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: fs }} />
+                  <YAxis tick={{ fontSize: fs }} />
                   <Tooltip />
                   <Bar dataKey="value" name="Tentatives" fill={CHART_COLORS.orange} radius={[6, 6, 0, 0]} />
                 </BarChart>
@@ -156,12 +170,12 @@ export default function DashboardSecurite() {
           </Panel>
 
           <Panel title="Sites bloqués (Top catégories)" icon={Globe} right="Bitdefender">
-            <div className="h-[200px]">
+            <div className="h-[150px] sm:h-[200px] overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={d.endpoint.websites} layout="vertical" margin={{ left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
+                  <XAxis type="number" tick={{ fontSize: fs }} />
+                  <YAxis type="category" dataKey="name" width={yAxisW} tick={{ fontSize: fs }} />
                   <Tooltip />
                   <Bar dataKey="value" name="Bloqués" fill={CHART_COLORS.bleu} radius={[0, 6, 6, 0]} />
                 </BarChart>
@@ -171,12 +185,12 @@ export default function DashboardSecurite() {
           </Panel>
 
           <Panel title="Applications bloquées (Top)" icon={AlertTriangle} right="Bitdefender">
-            <div className="h-[200px]">
+            <div className="h-[150px] sm:h-[200px] overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={d.endpoint.applications} layout="vertical" margin={{ left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10 }} />
+                  <XAxis type="number" tick={{ fontSize: fs }} />
+                  <YAxis type="category" dataKey="name" width={fs === 9 ? 100 : 130} tick={{ fontSize: fs }} />
                   <Tooltip />
                   <Bar dataKey="value" name="Bloquées" fill={CHART_COLORS.gris} radius={[0, 6, 6, 0]} />
                 </BarChart>

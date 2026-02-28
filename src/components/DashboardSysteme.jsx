@@ -1,4 +1,4 @@
-
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from "./ui/Card";
 import { Server, Cpu, HardDrive, Database, Gauge, Layers } from "lucide-react";
 import {
@@ -13,13 +13,24 @@ import {
 } from "recharts";
 import { systeme } from "../data/systeme";
 
+/* Hook responsive pour la taille des labels Recharts */
+function useChartFs() {
+  const [fs, setFs] = useState(() => window.innerWidth < 640 ? 9 : 11)
+  useEffect(() => {
+    const handler = () => setFs(window.innerWidth < 640 ? 9 : 11)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return fs
+}
+
 function KpiTile({ color, icon: Icon, label, value, sub }) {
   return (
-    <div className="rounded-xl shadow-sm text-white px-5 py-4" style={{ background: color }}>
+    <div className="rounded-xl shadow-sm text-white px-4 sm:px-5 py-4" style={{ background: color }}>
       <div className="flex items-center justify-between">
         <Icon className="opacity-90" />
         <div className="text-right">
-          <div className="text-3xl font-extrabold leading-none">{value}</div>
+          <div className="text-2xl sm:text-3xl font-extrabold leading-none">{value}</div>
           {sub ? <div className="text-xs opacity-90 mt-1">{sub}</div> : null}
         </div>
       </div>
@@ -30,6 +41,8 @@ function KpiTile({ color, icon: Icon, label, value, sub }) {
 
 export default function DashboardSysteme() {
   const { kpi, clusters, datastoresTop } = systeme;
+  const fs = useChartFs();
+  const yAxisW = fs === 9 ? 100 : 160;
 
   const datastoresForChart = datastoresTop
     .slice()
@@ -51,14 +64,16 @@ export default function DashboardSysteme() {
     }));
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-extrabold text-gray-900">Systèmes – Capacité & Stockage</h1>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900">
+          Systèmes – Capacité & Stockage
+        </h1>
         <p className="text-gray-600 mt-1">Consolidation RVTools (saldebaran + saldebaran-vdi)</p>
       </div>
 
       {/* KPI tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
         <KpiTile
           color="#2563eb"
           icon={Server}
@@ -109,17 +124,19 @@ export default function DashboardSysteme() {
             <p className="text-sm text-gray-500 mb-4">
               Lecture : où se concentre la consommation mémoire (proxy de charge VMs).
             </p>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={clustersForChart} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="cluster" width={160} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="ramGB" name="RAM (Go)" fill="#0ea5e9" />
-                <Bar dataKey="vms" name="VMs" fill="#2563eb" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[200px] sm:h-[320px] overflow-hidden">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={clustersForChart} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" tick={{ fontSize: fs }} />
+                  <YAxis type="category" dataKey="cluster" width={yAxisW} tick={{ fontSize: fs }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: fs }} />
+                  <Bar dataKey="ramGB" name="RAM (Go)" fill="#0ea5e9" />
+                  <Bar dataKey="vms" name="VMs" fill="#2563eb" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -130,21 +147,21 @@ export default function DashboardSysteme() {
             <p className="text-sm text-gray-500 mb-4">
               Lecture : capacité (To) et occupation (%) sur les datastores les plus chargés.
             </p>
-
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={datastoresForChart}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-20} textAnchor="end" height={70} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="usedTB" name="Utilisé (To)" stackId="a" fill="#f59e0b" />
-                <Bar dataKey="freeTB" name="Libre (To)" stackId="a" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
-
+            <div className="h-[200px] sm:h-[320px] overflow-hidden">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={datastoresForChart}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" tick={{ fontSize: fs }} interval={0} angle={-20} textAnchor="end" height={70} />
+                  <YAxis tick={{ fontSize: fs }} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: fs }} />
+                  <Bar dataKey="usedTB" name="Utilisé (To)" stackId="a" fill="#f59e0b" />
+                  <Bar dataKey="freeTB" name="Libre (To)" stackId="a" fill="#10b981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
             <div className="mt-4 text-sm text-white/90">
-              <span className="font-semibold">À retenir :</span> {kpi.occupationPct}% d’occupation globale, mais plusieurs datastores
+              <span className="font-semibold">À retenir :</span> {kpi.occupationPct}% d'occupation globale, mais plusieurs datastores
               dépassent 85% (risque saturation / performance).
             </div>
           </CardContent>
@@ -192,7 +209,7 @@ export default function DashboardSysteme() {
           <h3 className="font-semibold mb-2">Messages clés (DSI / DG)</h3>
           <ul className="list-disc ml-5 space-y-1">
             <li>
-              L’infrastructure consolide <strong>{kpi.totalVM}</strong> VM pour <strong>{kpi.totalRamGB} Go</strong> de RAM allouée
+              L'infrastructure consolide <strong>{kpi.totalVM}</strong> VM pour <strong>{kpi.totalRamGB} Go</strong> de RAM allouée
               (moyenne <strong>{kpi.avgRamGB} Go</strong> / VM).
             </li>
             <li>

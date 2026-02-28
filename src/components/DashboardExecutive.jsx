@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -47,97 +48,125 @@ const DATA = {
   },
 };
 
+/* Hook responsive pour la taille des labels Recharts */
+function useChartFs() {
+  const [fs, setFs] = useState(() => window.innerWidth < 640 ? 9 : 11)
+  useEffect(() => {
+    const handler = () => setFs(window.innerWidth < 640 ? 9 : 11)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return fs
+}
+
+/* ─── Composants UI ─── */
+
 function KpiSmall({ label, value, sub, accent = C.bleu }) {
   return (
-    <div style={{
-      background: C.blanc, border: "1px solid #e5e7eb", borderLeft: `4px solid ${accent}`,
-      borderRadius: 6, padding: "10px 14px",
-    }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 800, color: C.noir, lineHeight: 1.1, marginTop: 3 }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{sub}</div>}
+    <div
+      className="bg-white border border-gray-200 rounded-md px-3 py-2.5"
+      style={{ borderLeft: `4px solid ${accent}` }}
+    >
+      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">{label}</div>
+      <div className="text-lg sm:text-xl md:text-2xl font-extrabold text-[#1A1A1A] leading-tight mt-0.5">{value}</div>
+      {sub && <div className="text-[10px] text-gray-400 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
 function Badge({ status }) {
-  const m = {
-    ok: { bg: "#dcfce7", color: "#166534", text: "Maîtrisé" },
-    watch: { bg: "#fef3c7", color: "#92400e", text: "Attention" },
+  const styles = {
+    ok: "bg-green-100 text-green-800",
+    watch: "bg-yellow-100 text-yellow-800",
   };
-  const s = m[status] || m.ok;
-  return <span style={{ background: s.bg, color: s.color, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20 }}>{s.text}</span>;
+  const text = { ok: "Maîtrisé", watch: "Attention" };
+  return (
+    <span className={`${styles[status] || styles.ok} text-[11px] font-bold px-2.5 py-1 rounded-full`}>
+      {text[status] || text.ok}
+    </span>
+  );
 }
 
 function SectionBlock({ number, title, status, message, children }) {
   const borderColor = status === "ok" ? C.vert : C.orange;
   return (
-    <div style={{ background: C.blanc, border: "1px solid #e5e7eb", borderRadius: 8, marginBottom: 20, overflow: "hidden" }}>
-      <div style={{ padding: "12px 20px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between", borderLeft: `4px solid ${borderColor}` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16 }}>{number}</span>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: C.noir, margin: 0 }}>{title}</h2>
+    <div className="bg-white border border-gray-200 rounded-lg mb-5 overflow-hidden">
+      <div
+        className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center justify-between"
+        style={{ borderLeft: `4px solid ${borderColor}` }}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-base flex-shrink-0">{number}</span>
+          <h2 className="text-sm sm:text-[15px] font-extrabold text-[#1A1A1A] m-0 leading-snug">{title}</h2>
         </div>
         <Badge status={status} />
       </div>
-      <div style={{ padding: "10px 20px", background: "#f9fafb", borderBottom: "1px solid #f3f4f6", fontSize: 12, color: "#4b5563", lineHeight: 1.6, fontStyle: "italic" }}>
+      <div className="px-4 sm:px-5 py-2.5 bg-gray-50 border-b border-gray-100 text-xs text-gray-600 leading-relaxed italic">
         💬 {message}
       </div>
-      <div style={{ padding: 20 }}>{children}</div>
+      <div className="p-4 sm:p-5">{children}</div>
     </div>
   );
 }
 
 function ChartCard({ title, right, children, reading, readingColor }) {
   return (
-    <div style={{ background: C.blanc, border: "1px solid #e5e7eb", borderRadius: 6, overflow: "hidden" }}>
-      <div style={{ padding: "10px 14px", borderBottom: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: C.noir }}>{title}</span>
-        {right && <span style={{ fontSize: 10, color: "#9ca3af" }}>{right}</span>}
+    <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+      <div className="px-3 sm:px-3.5 py-2.5 border-b border-gray-100 flex justify-between items-center gap-2">
+        <span className="text-xs sm:text-[13px] font-bold text-[#1A1A1A] leading-snug">{title}</span>
+        {right && <span className="text-[10px] text-gray-400 flex-shrink-0">{right}</span>}
       </div>
-      <div style={{ padding: 14 }}>
+      <div className="p-3 sm:p-3.5">
         {children}
-        {reading && <div style={{ fontSize: 11, color: readingColor || C.orange, marginTop: 8, fontWeight: 600 }}>{reading}</div>}
+        {reading && (
+          <div className="text-[11px] mt-2 font-semibold" style={{ color: readingColor || C.orange }}>
+            {reading}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function ChartWrap({ h = 200, children }) {
+function ChartWrap({ className = "h-[150px] sm:h-[200px]", children }) {
   return (
-    <div style={{ width: "100%", height: h, overflow: "hidden" }}>
+    <div className={`w-full overflow-hidden ${className}`}>
       <ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer>
     </div>
   );
 }
 
+/* ─── Blocs de contenu ─── */
+
 function Bloc1DSI() {
   const d = DATA.itop;
+  const fs = useChartFs();
   return (
     <SectionBlock number="①" title="La DSI est-elle sous tension opérationnelle ?" status="ok"
       message="En décembre, la DSI a traité 18 tickets (10 incidents / 8 demandes), ce qui représente un volume faible et maîtrisé. Il n'y a pas de surcharge volumétrique. En revanche, le temps moyen de résolution est de 8,7 heures, ce qui entraîne un respect des SLA limité à 40%. 👉 Le sujet n'est donc pas un manque de capacité, mais un enjeu d'organisation, de priorisation et de pilotage des demandes et des urgences.">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
         <KpiSmall accent={C.bleu} label="Tickets total" value={d.ticketsTotal} sub="Déc. 2025" />
         <KpiSmall accent={C.orange} label="MTTR moyen" value={`${d.mttrH} h`} sub="incidents" />
         <KpiSmall accent={d.slaPct < 60 ? C.rouge : C.vert} label="SLA incidents" value={`${d.slaPct}%`} sub="≤ 4h (hypothèse)" />
         <KpiSmall accent={C.gris} label="Backlog demandes" value={d.backlog} sub="au 31/12" />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <ChartCard title="Incidents vs Demandes" right="iTop · Déc." reading="56% d'incidents — part élevée" readingColor={C.rouge}>
-          <ChartWrap h={190}>
+          <ChartWrap className="h-[150px] sm:h-[190px]">
             <PieChart>
               <Pie data={d.byType} dataKey="value" nameKey="name" innerRadius={45} outerRadius={70} paddingAngle={2}>
                 <Cell fill={C.rouge} /><Cell fill={C.bleu} />
               </Pie>
-              <Tooltip /><Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+              <Tooltip /><Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: fs }} />
             </PieChart>
           </ChartWrap>
         </ChartCard>
         <ChartCard title="Répartition urgence (incidents)" right="Distribution" reading="60% urgence haute — priorisation nécessaire" readingColor={C.orange}>
-          <ChartWrap h={190}>
+          <ChartWrap className="h-[150px] sm:h-[190px]">
             <BarChart data={d.urgence}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+              <XAxis dataKey="name" tick={{ fontSize: fs }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: fs }} />
               <Tooltip /><Bar dataKey="value" name="Incidents" fill={C.rouge} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ChartWrap>
@@ -149,23 +178,25 @@ function Bloc1DSI() {
 
 function Bloc2Wifi() {
   const d = DATA.wifi;
+  const fs = useChartFs();
+  const yAxisW = fs === 9 ? 90 : 120;
   const bornesColored = d.bornes.map(b => ({ ...b, fill: b.taux >= 90 ? C.rouge : b.taux >= 85 ? C.orange : C.vert }));
   const bornesAlert = d.bornes.filter(b => b.taux >= 88).length;
   return (
     <SectionBlock number="②" title="Le Wi-Fi et le réseau sont-ils dimensionnés pour l'usage réel ?" status="watch"
       message="Le réseau affiche une excellente disponibilité (98,9%) et supporte 780 utilisateurs par jour en moyenne, ce qui confirme son rôle critique. Cependant, plusieurs bornes atteignent 80 à 95% de charge, notamment sur les sites prioritaires. 👉 Le service fonctionne aujourd'hui correctement, mais la marge de capacité se réduit. Un investissement préventif ciblé permettra d'éviter une dégradation future.">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
         <KpiSmall accent={C.bleu} label="Utilisateurs Wi-Fi" value={d.usagers.toLocaleString("fr-FR")} sub="moyenne/jour · Déc. 2025" />
         <KpiSmall accent={C.vert} label="Disponibilité réseau" value={`${d.dispo}%`} />
         <KpiSmall accent={C.gris} label="Connexions pic" value={d.pic.toLocaleString("fr-FR")} sub="simultanées" />
         <KpiSmall accent={C.orange} label="Trafic réseau" value={`${d.trafic} Go`} sub="Déc. 2025" />
       </div>
       <ChartCard title="Bornes sous tension" right="Charge %" reading={`⚠ ${bornesAlert} bornes ≥ 88% — investissement requis`} readingColor={C.rouge}>
-        <ChartWrap h={220}>
+        <ChartWrap className="h-[150px] sm:h-[220px]">
           <BarChart data={bornesColored} layout="vertical" margin={{ left: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
-            <YAxis type="category" dataKey="borne" width={120} tick={{ fontSize: 11 }} />
+            <XAxis type="number" domain={[0, 100]} tick={{ fontSize: fs }} />
+            <YAxis type="category" dataKey="borne" width={yAxisW} tick={{ fontSize: fs }} />
             <Tooltip />
             <Bar dataKey="taux" name="Charge (%)">
               {bornesColored.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
@@ -179,20 +210,22 @@ function Bloc2Wifi() {
 
 function Bloc3Infra() {
   const d = DATA.systeme;
+  const fs = useChartFs();
   return (
     <SectionBlock number="③" title="L'infrastructure serveur est-elle sous pression ?" status="ok"
       message="L'infrastructure héberge 402 machines virtuelles avec un taux d'occupation global de 66%, ce qui laisse une capacité confortable à court terme. Seuls quelques datastores dépassent les 85% d'occupation, nécessitant une surveillance ciblée. 👉 Aucun besoin d'investissement urgent sur le socle serveur. La situation est maîtrisée sous réserve d'un suivi des zones à risque.">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-4">
         <KpiSmall accent={d.occPct >= 80 ? C.rouge : C.vert} label="Occupation stockage" value={`${d.occPct}%`} />
         <KpiSmall accent={d.datastoresAlert > 0 ? C.orange : C.vert} label="Zones à surveiller" value={d.datastoresAlert} sub="Datastores ≥ 85%" />
         <KpiSmall accent={C.bleu} label="VM totales" value={d.vm} />
         <KpiSmall accent={C.gris} label="RAM totale" value={`${d.ramGB.toLocaleString("fr-FR")} Go`} />
       </div>
       <ChartCard title="Top 3 datastores sous tension" right="Occupation %" reading="2 datastores à 94,5% — action requise" readingColor={C.rouge}>
-        <ChartWrap h={160}>
+        <ChartWrap className="h-[150px] sm:h-[160px]">
           <BarChart data={d.topDS}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="name" tick={{ fontSize: fs }} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: fs }} />
             <Tooltip />
             <Bar dataKey="pct" name="Occupation %">
               {d.topDS.map((entry, i) => <Cell key={i} fill={entry.pct >= 90 ? C.rouge : entry.pct >= 85 ? C.orange : C.vert} />)}
@@ -206,31 +239,33 @@ function Bloc3Infra() {
 
 function Bloc4Tel() {
   const d = DATA.tel;
+  const fs = useChartFs();
+  const yAxisW = fs === 9 ? 80 : 100;
   return (
     <SectionBlock number="④" title="La téléphonie est-elle un problème organisationnel ou structurel ?" status="watch"
       message="Le volume de demandes téléphonie est maîtrisé et la majorité des tickets sont traités efficacement. En revanche, le backlog est principalement constitué de demandes en attente de matériel (62 cas), ce qui traduit une dépendance fournisseur plutôt qu'un problème de capacité interne. 👉 L'enjeu est contractuel et logistique, non organisationnel côté DSI.">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
         <KpiSmall accent={C.bleu} label="Demandes Déc. 2025" value={d.dec2025} />
         <KpiSmall accent={C.rouge} label="Backlog ouvert" value={d.backlogTotal} sub="non traitées" />
         <KpiSmall accent={C.orange} label="Attente matériel" value={62} sub="54% du backlog" />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <ChartCard title="Backlog – répartition par statut" right="Export" reading="54% = attente matériel (dépendance fournisseur)" readingColor={C.orange}>
-          <ChartWrap h={200}>
+          <ChartWrap className="h-[150px] sm:h-[200px]">
             <PieChart>
               <Pie data={d.backlog} dataKey="value" nameKey="name" cx="50%" cy="42%" innerRadius={40} outerRadius={68} paddingAngle={2} labelLine={false}>
                 {d.backlog.map((_, i) => <Cell key={i} fill={PIE[i % PIE.length]} />)}
               </Pie>
-              <Legend verticalAlign="bottom" height={52} wrapperStyle={{ fontSize: 10 }} /><Tooltip />
+              <Legend verticalAlign="bottom" height={52} wrapperStyle={{ fontSize: fs - 1 }} /><Tooltip />
             </PieChart>
           </ChartWrap>
         </ChartCard>
         <ChartCard title="Top secteurs (global)" reading="Centre Ville concentre 58% des demandes" readingColor={C.bleu}>
-          <ChartWrap h={200}>
+          <ChartWrap className="h-[150px] sm:h-[200px]">
             <BarChart data={d.secteurs} layout="vertical" margin={{ left: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis type="number" tick={{ fontSize: 11 }} />
-              <YAxis type="category" dataKey="secteur" width={100} tick={{ fontSize: 10 }} />
+              <XAxis type="number" tick={{ fontSize: fs }} />
+              <YAxis type="category" dataKey="secteur" width={yAxisW} tick={{ fontSize: fs }} />
               <Tooltip /><Bar dataKey="value" fill={C.vert} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ChartWrap>
@@ -242,31 +277,31 @@ function Bloc4Tel() {
 
 export default function DashboardExecutive() {
   return (
-    <div className="p-6 space-y-0">
-      <div style={{ textAlign: "center", padding: "20px 0 6px" }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: C.noir, margin: 0, letterSpacing: "-0.01em" }}>
+    <div className="p-4 sm:p-6 space-y-0">
+      <div className="text-center py-5 pb-1.5">
+        <h1 className="text-lg sm:text-xl md:text-[26px] font-black text-[#1A1A1A] m-0 tracking-tight">
           Synthèse Exécutive — Cockpit DSI
         </h1>
-        <p style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>Données consolidées Déc. 2025</p>
+        <p className="text-sm text-gray-500 mt-1">Données consolidées Déc. 2025</p>
       </div>
 
-      <div style={{ background: C.noir, borderRadius: 8, padding: "16px 24px", marginBottom: 12, borderLeft: `4px solid ${C.rouge}`, marginTop: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 800, color: C.blanc, marginBottom: 6 }}>Points clés</div>
-        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, margin: 0 }}>
-          L'infrastructure est <span style={{ color: "#4ade80", fontWeight: 700 }}>globalement maîtrisée</span>.
-          Le Wi-Fi nécessite une <span style={{ color: "#fbbf24", fontWeight: 700 }}>anticipation d'investissement</span>.
-          La téléphonie dépend d'un <span style={{ color: C.or, fontWeight: 700 }}>enjeu fournisseur</span>.
-          La performance support relève d'un <span style={{ color: "#60a5fa", fontWeight: 700 }}>pilotage organisationnel</span>.
+      <div className="bg-[#1A1A1A] rounded-lg px-4 sm:px-6 py-4 mb-3 mt-3 border-l-4 border-[#E22019]">
+        <div className="text-sm font-extrabold text-white mb-1.5">Points clés</div>
+        <p className="text-sm leading-7 m-0" style={{ color: "rgba(255,255,255,0.85)" }}>
+          L'infrastructure est <span className="text-green-400 font-bold">globalement maîtrisée</span>.
+          Le Wi-Fi nécessite une <span className="text-yellow-300 font-bold">anticipation d'investissement</span>.
+          La téléphonie dépend d'un <span style={{ color: C.or }} className="font-bold">enjeu fournisseur</span>.
+          La performance support relève d'un <span className="text-blue-400 font-bold">pilotage organisationnel</span>.
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 12 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-3">
         <KpiSmall accent={C.rouge} label="Menaces bloquées" value="22 252" sub="/mois (57%)" />
         <KpiSmall accent={C.vert} label="Dispo réseau" value="98,9%" />
         <KpiSmall accent={C.bleu} label="Usagers Wi-Fi/j" value="780" sub="pic 1 050" />
         <KpiSmall accent={C.bleu} label="VM gérées" value="402" />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 24 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-6">
         <KpiSmall accent={C.orange} label="Stockage" value="66%" sub="3 pts chauds ≥85%" />
         <KpiSmall accent={C.noir} label="Tickets DSI" value="18" sub="10 incidents · 8 dem." />
         <KpiSmall accent={C.rouge} label="MTTR / SLA" value="8,7h / 40%" sub="marge de progrès" />
@@ -278,27 +313,27 @@ export default function DashboardExecutive() {
       <Bloc3Infra />
       <Bloc4Tel />
 
-      <div style={{ background: C.blanc, border: "1px solid #e5e7eb", borderRadius: 8, marginBottom: 20, overflow: "hidden" }}>
-        <div style={{ padding: "12px 20px", borderBottom: "1px solid #f3f4f6", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16 }}>④</span>
-          <h2 style={{ fontSize: 15, fontWeight: 800, color: C.noir, margin: 0 }}>Décisions proposées 2026</h2>
+      <div className="bg-white border border-gray-200 rounded-lg mb-5 overflow-hidden">
+        <div className="px-4 sm:px-5 py-3 border-b border-gray-100 flex items-center gap-2">
+          <span className="text-base">④</span>
+          <h2 className="text-sm sm:text-[15px] font-extrabold text-[#1A1A1A] m-0">Décisions proposées 2026</h2>
         </div>
-        <div style={{ padding: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {[
             { label: "Investissement Wi-Fi", desc: "Ajouter des bornes sur sites critiques, moderniser les bornes anciennes, mettre en place un monitoring plus fin, plan d'investissement ciblé 2026.", color: C.rouge },
             { label: "Pilotage support & priorisation", desc: "Mieux prioriser et piloter les demandes (rituel hebdo, catégorisation, SLA/urgences), réduire le MTTR, et envisager un renfort ponctuel si la tendance se confirme.", color: C.bleu },
             { label: "Téléphonie – axe fournisseur & stock", desc: "Renégocier fournisseur, mettre en place un stock tampon, simplifier les modèles de postes, planifier un renouvellement global si matériel vieillissant.", color: C.or },
           ].map((d, i) => (
-            <div key={i} style={{ padding: "14px 18px", borderLeft: `4px solid ${d.color}`, background: "#f9fafb", borderRadius: "0 6px 6px 0" }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: C.noir, marginBottom: 4 }}>{d.label}</div>
-              <div style={{ fontSize: 12, color: "#4b5563", lineHeight: 1.6 }}>{d.desc}</div>
+            <div key={i} className="py-3.5 px-4 bg-gray-50 rounded-r-md" style={{ borderLeft: `4px solid ${d.color}` }}>
+              <div className="text-sm font-extrabold text-[#1A1A1A] mb-1">{d.label}</div>
+              <div className="text-xs text-gray-600 leading-relaxed">{d.desc}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "14px 20px" }}>
-        <p style={{ fontSize: 12, color: "#4b5563", lineHeight: 1.6, margin: 0 }}>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 sm:px-5 py-3.5">
+        <p className="text-xs text-gray-600 leading-relaxed m-0">
           <strong style={{ color: C.rouge }}>Note méthodologique :</strong> Ce cockpit consolide des données réelles (Proofpoint, Bitdefender, iTop, RVTools, exports téléphonie ODS).
           Les hypothèses et extrapolations sont signalées dans chaque onglet détaillé. Prochaine itération : données Wi-Fi temps réel et automatisation des exports.
         </p>
